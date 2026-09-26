@@ -37,6 +37,20 @@ export const ScoreIcon = () => (
   </svg>
 );
 
+export const SoundOnIcon = () => (
+  <svg {...base}>
+    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+  </svg>
+);
+
+export const SoundOffIcon = () => (
+  <svg {...base}>
+    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+    <path d="M23 9l-6 6M17 9l6 6" />
+  </svg>
+);
+
 export const ExitIcon = () => (
   <svg {...base}>
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

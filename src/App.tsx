@@ -14,6 +14,7 @@ import { Home } from './ui/Home';
 import { Lobby } from './ui/Lobby';
 import { RulesModal } from './ui/RulesModal';
 import { ScoreSheet } from './ui/ScoreSheet';
+import { sound, useGameSounds } from './ui/sound';
 import { Table } from './ui/Table';
 import { TopBar } from './ui/TopBar';
 import { useTheme } from './ui/theme';
@@ -62,6 +63,23 @@ export function App() {
 
   const snapshot = useSyncExternalStore(session?.subscribe ?? noSubscribe, session?.getSnapshot ?? noSnapshot);
   const view = snapshot?.view ?? null;
+
+  const [soundOn, setSoundOn] = useState(sound.enabled);
+  const toggleSound = () => {
+    sound.setEnabled(!soundOn);
+    setSoundOn(!soundOn);
+  };
+  useGameSounds(view, !!snapshot && snapshot.role !== 'local');
+  // Audio may only start after a user gesture; every click or key press (re)unlocks it.
+  useEffect(() => {
+    const unlock = () => sound.unlock();
+    window.addEventListener('pointerdown', unlock, true);
+    window.addEventListener('keydown', unlock, true);
+    return () => {
+      window.removeEventListener('pointerdown', unlock, true);
+      window.removeEventListener('keydown', unlock, true);
+    };
+  }, []);
 
   const updateName = (n: string) => {
     setName(n);
@@ -140,6 +158,8 @@ export function App() {
       <TopBar
         theme={theme}
         onToggleTheme={toggleTheme}
+        soundOn={soundOn}
+        onToggleSound={toggleSound}
         code={snapshot?.role !== 'local' ? (snapshot?.code ?? null) : null}
         onRules={() => setRulesOpen(true)}
         onScores={inGame ? () => setScoresOpen(true) : undefined}

@@ -10,6 +10,7 @@ import { CardBack, CardFace } from './CardView';
 import { ContractInfo } from './ContractInfo';
 import { BidText, cardLabel, relPos } from './format';
 import { GameOver, HandResult } from './HandResult';
+import { sound } from './sound';
 
 interface Props {
   view: PlayerView;
@@ -266,6 +267,7 @@ function MyHand({ view, send }: Props) {
               whileTap={playable ? { scale: 0.96 } : undefined}
               transition={{ type: 'spring', stiffness: 380, damping: 32 }}
               disabled={!playable}
+              onPointerEnter={playable ? () => sound.hover() : undefined}
               aria-label={cardLabel(card, t)}
               onClick={() => playable && send({ type: 'play', card })}
             >

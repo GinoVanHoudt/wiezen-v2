@@ -1105,6 +1105,42 @@ fieldset:disabled .segmented {
   backdrop-filter: blur(4px);
 }
 
+.contract-info.minimized {
+  padding: 5px 6px 5px 10px;
+}
+
+.info-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.info-toggle {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: -2px -4px -2px 0;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.info-toggle:hover {
+  background: color-mix(in srgb, var(--panel-2) 80%, var(--accent));
+}
+
+.info-body {
+  overflow: hidden;
+}
+
 .contract-name {
   font-weight: 800;
   font-size: 1.05rem;
@@ -1114,11 +1150,27 @@ fieldset:disabled .segmented {
   flex-wrap: wrap;
 }
 
+.info-head > .muted {
+  white-space: nowrap;
+}
+
+.info-head .contract-name {
+  font-size: 0.85rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 .last-trick {
   display: flex;
   gap: 6px;
   overflow: hidden;
-  padding-top: 6px;
+  padding: 6px 0 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .last-trick .mini {

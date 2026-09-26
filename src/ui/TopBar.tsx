@@ -1,17 +1,19 @@
 import { type Lang, useI18n } from '../i18n';
-import { BookIcon, ExitIcon, MoonIcon, ScoreIcon, SunIcon } from './icons';
+import { BookIcon, ExitIcon, MoonIcon, ScoreIcon, SoundOffIcon, SoundOnIcon, SunIcon } from './icons';
 import type { Theme } from './theme';
 
 interface Props {
   theme: Theme;
   onToggleTheme: () => void;
+  soundOn: boolean;
+  onToggleSound: () => void;
   code: string | null;
   onRules: () => void;
   onScores?: () => void;
   onLeave?: () => void;
 }
 
-export function TopBar({ theme, onToggleTheme, code, onRules, onScores, onLeave }: Props) {
+export function TopBar({ theme, onToggleTheme, soundOn, onToggleSound, code, onRules, onScores, onLeave }: Props) {
   const { t, lang, setLang } = useI18n();
   return (
     <header className="topbar">
@@ -42,6 +44,15 @@ export function TopBar({ theme, onToggleTheme, code, onRules, onScores, onLeave 
           </button>
         ))}
       </div>
+      <button
+        className="icon-btn"
+        onClick={onToggleSound}
+        title={soundOn ? t('soundOff') : t('soundOn')}
+        aria-label={soundOn ? t('soundOff') : t('soundOn')}
+        aria-pressed={soundOn}
+      >
+        {soundOn ? <SoundOnIcon /> : <SoundOffIcon />}
+      </button>
       <button
         className="icon-btn"
         onClick={onToggleTheme}

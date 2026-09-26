@@ -6,6 +6,7 @@ Browser version of the Flemish trick-taking card game *kleurenwiezen*. You can p
 - **Bots** fill every empty seat. Friends can join mid-game and take over a bot. If a player drops out, a bot plays for them until they come back; reloading the page puts them back in their seat.
 - **Rules**: ask & join, alone, troel, piccolo (can be switched off), abondance, misère, open misère and solo slim. The rules and scoring are explained in the app (📖).
 - **NL / EN** language switcher, **dark mode**, a responsive layout for phones, and animations for dealing, playing cards and collecting tricks.
+- **Sound effects** for shuffling and dealing, playing a card, sweeping up a trick, bids, your turn (online), and winning or losing a hand. They are synthesised with the Web Audio API, so there are no audio files, and you can mute them in the top bar.
 - A solo game survives a page reload ("Resume your game").
 
 ## Development
