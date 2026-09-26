@@ -28,7 +28,9 @@ npm run smoke:online   # host + guest over WebRTC, disconnect/rejoin, host leavi
 
 ## Deploying
 
-`npm run build` produces a fully static `dist/` with relative paths, so it works on any static host or sub-folder. The included GitHub Actions workflow (`.github/workflows/deploy.yml`) publishes to GitHub Pages on every push to `main`. To turn it on, set *Settings → Pages → Source* to *GitHub Actions*.
+`npm run build` produces a fully static `dist/` with relative paths, so it works on any static host or sub-folder. The included GitHub Actions workflow (`.github/workflows/deploy.yml`) runs the tests, builds, and publishes to GitHub Pages on every push to `main`. The site is served at `https://<owner>.github.io/wiezen-v2/`.
+
+To turn it on, a repository admin sets *Settings → Pages → Source* to *GitHub Actions*. On a GitHub Free account, Pages only works for public repositories; a private repository needs GitHub Pro or a paid organization plan, and the published site is public either way. Online play needs nothing extra from the host: the browsers find each other through the public PeerJS server and then talk directly over WebRTC (Pages serves over HTTPS, which WebRTC requires).
 
 ## Code layout
 
