@@ -8,7 +8,7 @@ import type { ClientAction } from '../net/protocol';
 import { BiddingPanel } from './BiddingPanel';
 import { CardBack, CardFace } from './CardView';
 import { ContractInfo } from './ContractInfo';
-import { BidText, cardLabel, relPos } from './format';
+import { BidText, SuitIcon, cardLabel, relPos, shortContractName } from './format';
 import { GameOver, HandResult } from './HandResult';
 import { sound } from './sound';
 
@@ -114,7 +114,8 @@ function Nameplate({ view, seat }: { view: PlayerView; seat: Seat }) {
   const active =
     (view.phase === 'bidding' && view.bidding?.turn === seat) || (view.phase === 'playing' && view.turn === seat);
   const inPlay = view.phase === 'playing' || view.phase === 'handEnd';
-  const declarer = inPlay && !!view.contract?.declarers.includes(seat);
+  const contract = inPlay ? view.contract : null;
+  const side = contract && (contract.declarers.includes(seat) ? 'decl' : 'def');
   const log = view.bidding?.log ?? [];
   let lastIndex = -1;
   for (let i = log.length - 1; i >= 0; i--) {
@@ -126,7 +127,7 @@ function Nameplate({ view, seat }: { view: PlayerView; seat: Seat }) {
   const showBubble = view.phase === 'bidding' && lastIndex >= 0;
 
   return (
-    <div className={`nameplate ${active ? 'active' : ''} ${declarer ? 'declarer' : ''}`}>
+    <div className={`nameplate ${active ? 'active' : ''} ${side ? `team-${side}` : ''}`}>
       <span className="avatar">{p.bot ? '🤖' : p.name.slice(0, 1).toUpperCase()}</span>
       <span className="np-name">
         {p.name}
@@ -161,6 +162,27 @@ function Nameplate({ view, seat }: { view: PlayerView; seat: Seat }) {
           >
             <BidText entry={log[lastIndex]} t={t} />
           </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {contract && side && (
+          <motion.span
+            key={`${view.handNo}-${side}`}
+            className={`role-tag ${side}`}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 22, delay: 0.1 + relPos(seat, view.seat) * 0.08 }}
+          >
+            {side === 'decl' ? (
+              <>
+                {shortContractName(contract.type, t)}
+                {contract.trump && <SuitIcon suit={contract.trump} />}
+              </>
+            ) : (
+              t('defender')
+            )}
+          </motion.span>
         )}
       </AnimatePresence>
     </div>

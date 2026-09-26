@@ -68,6 +68,8 @@ export const en = {
   'contract.openMiserie': 'Open misère',
   'contract.soloSlim': 'Solo slim',
   'contract.ask': 'Asks',
+  'short.samen': 'Ask & join',
+  defender: 'Defender',
   'suit.H': 'Hearts',
   'suit.D': 'Diamonds',
   'suit.C': 'Clubs',

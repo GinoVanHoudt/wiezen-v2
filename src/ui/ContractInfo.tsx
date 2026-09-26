@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { nextSeat } from '../game/cards';
+import { SEATS, nextSeat } from '../game/cards';
 import { playedHands } from '../game/engine';
 import { CONTRACTS } from '../game/rules';
 import type { PlayerView } from '../game/view';
@@ -21,6 +21,9 @@ function useStoredFlag(key: string, initial: boolean): [boolean, () => void] {
     });
   return [value, toggle];
 }
+
+/** Keeps a score on the same line as the last name when the text wraps. */
+const NBSP = ' ';
 
 const collapse = {
   initial: { opacity: 0, height: 0 },
@@ -45,6 +48,8 @@ export function ContractInfo({ view }: { view: PlayerView }) {
 
   const def = contract && CONTRACTS[contract.type];
   const teamTricks = contract ? contract.declarers.reduce<number>((sum, s) => sum + view.tricksWon[s], 0) : 0;
+  const defenders = contract ? SEATS.filter((s) => !contract.declarers.includes(s)) : [];
+  const defenderTricks = defenders.reduce<number>((sum, s) => sum + view.tricksWon[s], 0);
   const last = view.lastTrick;
 
   return (
@@ -83,23 +88,40 @@ export function ContractInfo({ view }: { view: PlayerView }) {
                   {contract.trump ? (
                     <SuitIcon suit={contract.trump} />
                   ) : (
-                    <span className="muted small"> · {t('noTrump')}</span>
+                    <span className="muted small no-trump">{t('noTrump')}</span>
                   )}
                   {contract.multiplier > 1 && <span className="badge gold">×{contract.multiplier}</span>}
                 </div>
-                <div className="small">
+                <div className="sides small">
                   {def.kind === 'team' ? (
-                    <>
-                      {contract.declarers.map(name).join(' + ')}: <strong>{teamTricks}</strong> / {def.target}
-                    </>
+                    <div className="side decl">
+                      <span className="swatch" />
+                      <span>
+                        {contract.declarers.map(name).join(' + ')}:{NBSP}
+                        <strong>{teamTricks}</strong>
+                        {NBSP}/{NBSP}
+                        {def.target}
+                      </span>
+                    </div>
                   ) : (
                     contract.declarers.map((s) => (
-                      <div key={s}>
-                        {name(s)}: <strong>{view.tricksWon[s]}</strong>{' '}
-                        <span className="muted">({targetText(contract, t)})</span>
+                      <div key={s} className="side decl">
+                        <span className="swatch" />
+                        <span>
+                          {name(s)}:{NBSP}
+                          <strong>{view.tricksWon[s]}</strong>{' '}
+                          <span className="muted">({targetText(contract, t)})</span>
+                        </span>
                       </div>
                     ))
                   )}
+                  <div className="side def">
+                    <span className="swatch" />
+                    <span>
+                      {defenders.map(name).join(' + ')}:{NBSP}
+                      <strong>{defenderTricks}</strong>
+                    </span>
+                  </div>
                 </div>
                 {last && (
                   <button className="link-btn small" onClick={toggleLast} aria-expanded={showLast}>

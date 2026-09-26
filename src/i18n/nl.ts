@@ -70,6 +70,8 @@ export const nl: Dict = {
   'contract.openMiserie': 'Open miserie',
   'contract.soloSlim': 'Solo slim',
   'contract.ask': 'Vraagt',
+  'short.samen': 'Samen',
+  defender: 'Tegenspeler',
   'suit.H': 'Harten',
   'suit.D': 'Ruiten',
   'suit.C': 'Klaveren',

@@ -18,6 +18,10 @@ export const cardLabel = (card: Card, t: T) => `${SUIT_SYMBOL[suitOf(card)]}${ra
 
 export const contractName = (type: Contract['type'] | HighBid['type'], t: T) => t(`contract.${type}` as TKey);
 
+/** Contract name for the role tags at the table, where long names don't fit. */
+export const shortContractName = (type: Contract['type'], t: T) =>
+  type === 'samen' ? t('short.samen') : contractName(type, t);
+
 /** Short text for a bid in the speech bubbles and bidding log. */
 export function BidText({ entry, t }: { entry: BidLogEntry; t: T }) {
   const bid = entry.bid;
