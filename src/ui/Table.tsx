@@ -65,6 +65,8 @@ export function Table({ view, send }: Props) {
           ))}
           <div className="area-center">
             <TrickArea view={view} />
+          </div>
+          <div className="felt-overlay">
             <AnimatePresence>
               {view.phase === 'bidding' && <BiddingPanel key={`bid-${view.handNo}`} view={view} send={send} />}
               {allPassed && (

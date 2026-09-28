@@ -804,10 +804,35 @@ fieldset:disabled .segmented {
 
 .area-center {
   grid-area: center;
-  position: relative;
   display: grid;
   place-items: center;
   min-height: 0;
+}
+
+/* The bidding panel spans the middle column from top to bottom: a tall panel may cover the top
+   seat and my nameplate, but never my hand, the side seats or the top bar. */
+.felt-overlay {
+  position: absolute;
+  inset: 0;
+  grid-column: 2 / 3;
+  grid-row: 1 / -1;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Centred on the trick while it fits. The top row is taller than mine by the top hand and the seat
+   gap, hence the unequal spacers. A taller panel covers my nameplate first, then the top seat. */
+.felt-overlay::before,
+.felt-overlay::after {
+  content: '';
+  flex: 1 1 0;
+}
+
+.felt-overlay::before {
+  flex-basis: calc(var(--card) * 0.7 + 10px);
 }
 
 .area-me {
@@ -1093,10 +1118,13 @@ fieldset:disabled .segmented {
     0 10px 24px rgba(0, 0, 0, 0.45);
 }
 
-.area-center > .panel {
-  position: absolute;
-  z-index: 10;
+.felt-overlay > .panel {
+  flex: none;
   width: min(430px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
 }
 
 .bidding-panel {
@@ -1109,12 +1137,23 @@ fieldset:disabled .segmented {
 
 .bidding-head {
   display: flex;
+  flex-wrap: wrap;
+  row-gap: 4px;
   justify-content: center;
   align-items: center;
 }
 
 .bidding-head h3 {
   margin: 0;
+}
+
+.bidding-head .badge {
+  white-space: nowrap;
+}
+
+/* A row wider than the panel squeezes its buttons instead of sticking out. */
+.bidding-panel .btn-row {
+  max-width: 100%;
 }
 
 .high-bid {
@@ -1609,6 +1648,92 @@ th {
     display: none;
   }
 
+  .suit-btn {
+    width: 46px;
+  }
+
+  .btn {
+    padding: 8px 12px;
+  }
+
+  .invite-code strong {
+    font-size: 1.5rem;
+  }
+
+  /* The middle column is only about 200px wide here: fit two contracts on a row. */
+  .bidding-panel {
+    padding: 10px 8px;
+    gap: 6px;
+  }
+
+  .bid-actions {
+    gap: 8px;
+  }
+
+  .bidding-panel .btn-row {
+    gap: 6px;
+  }
+
+  .bid-group .btn-row.wrap .btn {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-header {
+    padding: 12px 14px 0;
+  }
+
+  .modal-body {
+    padding: 12px 14px 14px;
+  }
+
+  th,
+  td {
+    padding: 6px 5px;
+  }
+
+  /* Four players and the contract: wrap the names rather than scroll sideways. */
+  .score-table th,
+  .score-table .contract-cell {
+    white-space: normal;
+  }
+
+  /* The contracts as a list: the name and description across the full width, the numbers below. */
+  .rules-table,
+  .rules-table thead,
+  .rules-table tbody {
+    display: block;
+  }
+
+  .rules-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rules-table th,
+  .rules-table td {
+    border-bottom: 0;
+  }
+
+  .rules-table th:first-child,
+  .rules-table td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 0;
+  }
+
+  .rules-table td:nth-child(n + 2) {
+    white-space: normal;
+  }
+}
+
+/* Phones in either orientation: narrow side seats, which leaves the bidding panel room, and a
+   narrow info box. */
+@media (max-width: 700px), (max-height: 560px) and (orientation: landscape) {
   .felt {
     grid-template-columns: 62px minmax(0, 1fr) 62px;
     margin: 6px 6px 0;
@@ -1658,21 +1783,6 @@ th {
     translate: none;
   }
 
-  .suit-btn {
-    width: 46px;
-  }
-
-  .btn {
-    padding: 8px 12px;
-  }
-
-  .invite-code strong {
-    font-size: 1.5rem;
-  }
-}
-
-/* Phones in either orientation: a narrow info box. */
-@media (max-width: 700px), (max-height: 560px) and (orientation: landscape) {
   .contract-info {
     top: 8px;
     left: 8px;
@@ -1747,5 +1857,117 @@ th {
     top: 0;
     left: max(0px, 50% - var(--card) * 1.7 - 158px);
     max-width: 150px;
+  }
+
+  /* Only about 200px of felt height: lay the bidding panel out in rows, such as
+     "Bidding · Highest bid: none", "Your turn [Pass] Ask ♥♦♣♠" and "Play alone [Piccolo] ...". */
+  .felt-overlay > .panel {
+    width: min(560px, 100%);
+  }
+
+  .bidding-panel {
+    flex-flow: row wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px 14px;
+    padding: 8px 12px;
+  }
+
+  .bidding-panel > .troel-banner,
+  .bidding-panel > .waiting,
+  .bid-actions {
+    flex-basis: 100%;
+  }
+
+  .bidding-panel > .waiting {
+    margin: 0;
+  }
+
+  .high-bid,
+  .bid-group {
+    flex-flow: row wrap;
+    justify-content: center;
+    gap: 4px 6px;
+  }
+
+  .bid-actions {
+    flex-flow: row wrap;
+    justify-content: center;
+    gap: 6px 14px;
+  }
+
+  .bidding-panel .btn {
+    padding: 6px 10px;
+  }
+
+  .bidding-panel .suit-btn {
+    padding: 3px 0;
+    font-size: 1.3rem;
+  }
+
+  .troel-banner {
+    padding: 4px 10px;
+  }
+
+  /* Dialogs: less padding, and the hand result next to the scores so nothing scrolls away. */
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .modal-header {
+    padding: 10px 16px 0;
+  }
+
+  .modal-body {
+    padding: 10px 16px 14px;
+  }
+
+  .modal:has(.hand-result) {
+    width: min(660px, 100%);
+  }
+
+  .hand-result {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'contract table'
+      'outcomes table'
+      'next table';
+    gap: 10px 18px;
+  }
+
+  .result-contract {
+    grid-area: contract;
+  }
+
+  .outcomes {
+    grid-area: outcomes;
+  }
+
+  .result-table {
+    grid-area: table;
+  }
+
+  .hand-result > .btn.big,
+  .hand-result > .waiting {
+    grid-area: next;
+    align-self: end;
+  }
+
+  .outcome {
+    padding: 5px 8px;
+  }
+
+  .game-over {
+    gap: 10px;
+  }
+
+  .ranking li {
+    padding: 5px 4px;
   }
 }
