@@ -8,6 +8,7 @@ export const en = {
   resumeGameHint: 'Continue the game against the bots where you left off.',
   createRoom: 'Create online table',
   createRoomHint: 'Invite friends with a link; bots fill the empty seats.',
+  mobileDataHost: 'You are on mobile data (3G/4G/5G). Friends usually cannot connect to a table hosted over mobile data. Switch to Wi-Fi to create an online table.',
   joinRoom: 'Join a table',
   roomCode: 'Table code',
   join: 'Join',

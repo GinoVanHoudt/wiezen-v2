@@ -437,6 +437,12 @@ fieldset:disabled .segmented {
   border-radius: 10px;
 }
 
+.alert.warn {
+  background: color-mix(in srgb, var(--gold) 16%, var(--panel));
+  border-color: var(--gold);
+  font-size: 0.9rem;
+}
+
 .spinner {
   width: 14px;
   height: 14px;

@@ -10,6 +10,7 @@ export const nl: Dict = {
   resumeGameHint: 'Ga verder met je spel tegen de bots waar je gebleven was.',
   createRoom: 'Online tafel maken',
   createRoomHint: 'Nodig vrienden uit met een link; bots vullen de lege plaatsen.',
+  mobileDataHost: 'Je zit op mobiele data (3G/4G/5G). Vrienden raken meestal niet aan een tafel die via mobiele data gemaakt is. Schakel over naar wifi om een online tafel te maken.',
   joinRoom: 'Aan een tafel gaan',
   roomCode: 'Tafelcode',
   join: 'Deelnemen',

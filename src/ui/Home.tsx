@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { type FormEvent, useState } from 'react';
 import { useI18n } from '../i18n';
+import { useMobileData } from '../net/network';
 import type { SessionError } from '../net/session';
 import { CardFace } from './CardView';
 
@@ -21,6 +22,7 @@ export function Home({ name, onName, initialCode, error, onLocal, onResume, onHo
   const { t } = useI18n();
   const [code, setCode] = useState(initialCode);
   const nameOk = name.trim().length > 0;
+  const mobileData = useMobileData();
 
   const join = (e: FormEvent) => {
     e.preventDefault();
@@ -73,10 +75,11 @@ export function Home({ name, onName, initialCode, error, onLocal, onResume, onHo
             <span>🤖 {t('playBots')}</span>
             <small>{t('playBotsHint')}</small>
           </button>
-          <button className="btn big" disabled={!nameOk} onClick={onHost}>
+          <button className="btn big" disabled={!nameOk || mobileData} onClick={onHost}>
             <span>🌐 {t('createRoom')}</span>
             <small>{t('createRoomHint')}</small>
           </button>
+          {mobileData && <div className="alert warn">{t('mobileDataHost')}</div>}
         </div>
 
         <div className="divider">
