@@ -51,6 +51,19 @@ function playGame(seed: number, hands = 16) {
   return state;
 }
 
+/** A freshly dealt hand in the bidding phase, with or without a troel. */
+function fresh(seed: number, wantTroel = false) {
+  for (let s = seed; s < seed + 500; s++) {
+    const state = applyAction(createGame(bots(), DEFAULT_SETTINGS), { type: 'start' }, rng(s));
+    if (!!state.bidding!.troel === wantTroel) return state;
+  }
+  throw new Error('no suitable deal');
+}
+
+/** The player whose turn it is makes this bid. */
+const bid = (state: GameState, b: BidAction) => applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: b });
+const pass = (state: GameState) => bid(state, { kind: 'pass' });
+
 describe('cards', () => {
   it('deals 13 unique cards to every player', () => {
     const hands = deal(0, rng(1));
@@ -121,46 +134,32 @@ describe('troel', () => {
 });
 
 describe('bidding', () => {
-  function started(seed: number) {
-    let state = createGame(bots(), DEFAULT_SETTINGS);
-    state = applyAction(state, { type: 'start' }, rng(seed));
-    return state;
-  }
-
   it('lets the first player ask and a later player join', () => {
-    let seed = 1;
-    let state = started(seed);
-    while (state.bidding!.troel) state = started(++seed);
+    let state = fresh(1);
     const first = state.bidding!.turn!;
-    state = applyAction(state, { type: 'bid', seat: first, bid: { kind: 'ask', suit: 'H' } });
+    state = bid(state, { kind: 'ask', suit: 'H' });
     const second = state.bidding!.turn!;
     expect(legalBids(state, second)).toContainEqual({ kind: 'join' });
-    state = applyAction(state, { type: 'bid', seat: second, bid: { kind: 'join' } });
-    state = applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: { kind: 'pass' } });
-    state = applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: { kind: 'pass' } });
+    state = pass(pass(bid(state, { kind: 'join' })));
     expect(state.phase).toBe('playing');
     expect(state.contract).toMatchObject({ type: 'samen', trump: 'H', declarers: [first, second] });
   });
 
   it('offers the unanswered asker to play alone', () => {
-    let seed = 1;
-    let state = started(seed);
-    while (state.bidding!.troel) state = started(++seed);
+    let state = fresh(1);
     const first = state.bidding!.turn!;
-    state = applyAction(state, { type: 'bid', seat: first, bid: { kind: 'ask', suit: 'S' } });
-    for (let i = 0; i < 3; i++) state = applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: { kind: 'pass' } });
+    state = bid(state, { kind: 'ask', suit: 'S' });
+    for (let i = 0; i < 3; i++) state = pass(state);
     expect(state.bidding!.turn).toBe(first);
     expect(legalBids(state, first)).toEqual([{ kind: 'alone' }, { kind: 'pass' }]);
-    state = applyAction(state, { type: 'bid', seat: first, bid: { kind: 'alone' } });
+    state = bid(state, { kind: 'alone' });
     expect(state.contract).toMatchObject({ type: 'alleen', trump: 'S', declarers: [first] });
   });
 
   it('redeals with doubled points when everybody passes, and hides piccolo when disabled', () => {
-    let seed = 1;
-    let state = started(seed);
-    while (state.bidding!.troel) state = started(++seed);
+    let state = fresh(1);
     const dealer = state.dealer;
-    for (let i = 0; i < 4; i++) state = applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: { kind: 'pass' } });
+    for (let i = 0; i < 4; i++) state = pass(state);
     expect(state.phase).toBe('handEnd');
     expect(state.nextMultiplier).toBe(2);
     state = applyAction(state, { type: 'nextHand' });
@@ -175,7 +174,7 @@ describe('bidding', () => {
   });
 
   it('rejects out-of-turn and illegal actions', () => {
-    const state = started(3);
+    const state = fresh(3);
     const turn = state.bidding!.turn!;
     const other = ((turn + 1) % 4) as Seat;
     expect(() => applyAction(state, { type: 'bid', seat: other, bid: { kind: 'pass' } })).toThrow();
@@ -184,20 +183,11 @@ describe('bidding', () => {
 });
 
 describe('contracts', () => {
-  function fresh(seed: number, wantTroel = false) {
-    for (let s = seed; s < seed + 500; s++) {
-      const state = applyAction(createGame(bots(), DEFAULT_SETTINGS), { type: 'start' }, rng(s));
-      if (!!state.bidding!.troel === wantTroel) return state;
-    }
-    throw new Error('no suitable deal');
-  }
-  const bid = (state: GameState, b: BidAction) => applyAction(state, { type: 'bid', seat: state.bidding!.turn!, bid: b });
-
   it('plays piccolo without trump, led by the player left of the dealer', () => {
     let state = fresh(10);
     const declarer = state.bidding!.turn!;
     state = bid(state, { kind: 'bid', contract: 'piccolo' });
-    while (state.phase === 'bidding') state = bid(state, { kind: 'pass' });
+    while (state.phase === 'bidding') state = pass(state);
     expect(state.contract).toMatchObject({ type: 'piccolo', trump: null, declarers: [declarer] });
     expect(state.turn).toBe((state.dealer + 1) % 4);
   });
@@ -210,7 +200,7 @@ describe('contracts', () => {
     expect(legalBids(state, second)).toContainEqual({ kind: 'join' });
     expect(legalBids(state, second).some((b) => b.kind === 'ask')).toBe(false);
     state = bid(state, { kind: 'join' });
-    while (state.phase === 'bidding') state = bid(state, { kind: 'pass' });
+    while (state.phase === 'bidding') state = pass(state);
     expect(state.contract).toMatchObject({ type: 'miserie', declarers: [first, second] });
   });
 
@@ -219,8 +209,8 @@ describe('contracts', () => {
     const asker = state.bidding!.turn!;
     state = bid(state, { kind: 'ask', suit: 'H' });
     state = bid(state, { kind: 'bid', contract: 'miserie' });
-    state = bid(state, { kind: 'pass' });
-    state = bid(state, { kind: 'pass' });
+    state = pass(state);
+    state = pass(state);
     expect(state.bidding!.turn).toBe(asker);
     const legal = legalBids(state, asker);
     expect(legal).toContainEqual({ kind: 'join' });
@@ -232,7 +222,7 @@ describe('contracts', () => {
     let state = fresh(40);
     const declarer = state.bidding!.turn!;
     state = bid(state, { kind: 'bid', contract: 'abondance', suit: 'C' });
-    while (state.phase === 'bidding') state = bid(state, { kind: 'pass' });
+    while (state.phase === 'bidding') state = pass(state);
     expect(state.contract).toMatchObject({ type: 'abondance', trump: 'C', declarers: [declarer] });
     expect(state.turn).toBe(declarer);
   });
@@ -245,7 +235,7 @@ describe('contracts', () => {
     expect(legalBids(state, state.bidding!.turn!).some((b) => b.kind === 'ask')).toBe(false);
 
     let passed = state;
-    while (passed.phase === 'bidding') passed = bid(passed, { kind: 'pass' });
+    while (passed.phase === 'bidding') passed = pass(passed);
     expect(passed.contract).toMatchObject({ type: 'troel', trump: troel.trump });
 
     const over = bid(state, { kind: 'bid', contract: 'miserie' });
@@ -255,7 +245,7 @@ describe('contracts', () => {
     const spoke = new Set<number>();
     while (s.phase === 'bidding') {
       spoke.add(s.bidding!.turn!);
-      s = bid(s, { kind: 'pass' });
+      s = pass(s);
     }
     expect(spoke.has(troel.seat)).toBe(true);
     expect(s.contract!.type).toBe('miserie');
@@ -265,7 +255,7 @@ describe('contracts', () => {
     let state = fresh(50);
     const declarer = state.bidding!.turn!;
     state = bid(state, { kind: 'bid', contract: 'openMiserie' });
-    while (state.phase === 'bidding') state = bid(state, { kind: 'pass' });
+    while (state.phase === 'bidding') state = pass(state);
     const other = ((declarer + 1) % 4) as Seat;
     const view = viewFor(state, other);
     expect(view.hands[declarer]).toEqual(state.hands[declarer]);
@@ -278,6 +268,67 @@ describe('contracts', () => {
     const view = viewFor(state, 2);
     expect(view.hands.map((h) => h !== null)).toEqual([false, false, true, false]);
     expect(view.handSizes).toEqual([13, 13, 13, 13]);
+  });
+});
+
+describe('waiting', () => {
+  const canWait = (state: GameState) => legalBids(state, state.bidding!.turn!).some((b) => b.kind === 'wait');
+
+  it('lets the first player wait and still join an ask nobody joined', () => {
+    let state = fresh(70);
+    const waiter = state.bidding!.turn!;
+    expect(canWait(state)).toBe(true);
+    state = bid(state, { kind: 'wait' });
+    const asker = state.bidding!.turn!;
+    state = pass(pass(bid(state, { kind: 'ask', suit: 'D' })));
+    expect(state.bidding!.turn).toBe(waiter);
+    expect(legalBids(state, waiter)).toEqual([{ kind: 'join' }, { kind: 'pass' }]);
+    state = bid(state, { kind: 'join' });
+    expect(state.phase).toBe('playing');
+    expect(state.contract).toMatchObject({ type: 'samen', trump: 'D', declarers: [asker, waiter] });
+  });
+
+  it('leaves the choice to play alone to the asker when the waiter passes', () => {
+    let state = bid(fresh(70), { kind: 'wait' });
+    const asker = state.bidding!.turn!;
+    state = pass(pass(pass(bid(state, { kind: 'ask', suit: 'C' }))));
+    expect(state.bidding!.turn).toBe(asker);
+    expect(legalBids(state, asker)).toEqual([{ kind: 'alone' }, { kind: 'pass' }]);
+    state = bid(state, { kind: 'alone' });
+    expect(state.contract).toMatchObject({ type: 'alleen', trump: 'C', declarers: [asker] });
+  });
+
+  it('counts as a pass when nobody asks, or the ask is joined or overbid', () => {
+    const waited = bid(fresh(70), { kind: 'wait' });
+    const asker = waited.bidding!.turn!;
+
+    const nobody = pass(pass(pass(waited)));
+    expect(nobody.phase).toBe('handEnd');
+    expect(nobody.contract).toBeNull();
+
+    const joined = pass(bid(bid(waited, { kind: 'ask', suit: 'H' }), { kind: 'join' }));
+    expect(joined.contract).toMatchObject({ type: 'samen', declarers: [asker, (asker + 1) % 4] });
+
+    const overbid = pass(pass(bid(bid(waited, { kind: 'ask', suit: 'H' }), { kind: 'bid', contract: 'miserie' })));
+    expect(overbid.contract).toMatchObject({ type: 'miserie', declarers: [(asker + 1) % 4] });
+  });
+
+  it('is only offered to the first speaker, without a troel, when the rule is on', () => {
+    const state = fresh(70);
+    expect(canWait({ ...state, settings: { ...state.settings, waiting: false } })).toBe(false);
+    expect(canWait(pass(state))).toBe(false);
+    expect(canWait(fresh(1, true))).toBe(false);
+  });
+
+  it('makes bots wait instead of passing when they speak first', () => {
+    const kinds = new Set<string>();
+    for (let seed = 1; seed <= 40; seed++) {
+      const state = fresh(seed * 10);
+      const action = botAction(viewFor(state, state.bidding!.turn!));
+      if (action?.type === 'bid') kinds.add(action.bid.kind);
+    }
+    expect(kinds).toContain('wait');
+    expect(kinds).not.toContain('pass');
   });
 });
 

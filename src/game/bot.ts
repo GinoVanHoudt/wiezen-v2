@@ -86,6 +86,9 @@ function piccoloCandidate(hand: Card[]): boolean {
   return miserieRisk(hand.filter((c) => c !== aces[0])) <= 1;
 }
 
+/** Whether this hand is worth joining an ask in `suit`. */
+const joinsAsk = (hand: Card[], suit: Suit) => estimateTricks(hand, suit) >= 2.8;
+
 function chooseBid(view: PlayerView): BidAction {
   const hand = view.hands[view.seat] ?? [];
   const legal = legalBids(view, view.seat);
@@ -93,6 +96,9 @@ function chooseBid(view: PlayerView): BidAction {
   const b = view.bidding!;
   const best = bestSuit(hand);
 
+  if (b.waiterDecision) {
+    return joinsAsk(hand, b.high!.suit!) ? { kind: 'join' } : { kind: 'pass' };
+  }
   if (b.askerDecision) {
     return estimateTricks(hand, b.high!.suit!) >= 4.9 ? { kind: 'alone' } : { kind: 'pass' };
   }
@@ -124,12 +130,13 @@ function chooseBid(view: PlayerView): BidAction {
 
   if (high?.type === 'ask') {
     const join = has((l) => l.kind === 'join');
-    if (join && estimateTricks(hand, high.suit!) >= 2.8) return join;
+    if (join && joinsAsk(hand, high.suit!)) return join;
   }
   if (!high && best.tricks >= 4.5 && ranksIn(hand, best.suit).length >= 4) {
     return { kind: 'ask', suit: best.suit };
   }
-  return { kind: 'pass' };
+  // Waiting keeps the chance to join an ask later, so it is never worse than passing.
+  return has((l) => l.kind === 'wait') ?? { kind: 'pass' };
 }
 
 // ---------------------------------------------------------------------------------------------

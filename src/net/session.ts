@@ -1,7 +1,7 @@
 import Peer, { type DataConnection } from 'peerjs';
 import type { Seat } from '../game/cards';
 import type { GameState } from '../game/engine';
-import type { Settings } from '../game/rules';
+import { DEFAULT_SETTINGS, type Settings } from '../game/rules';
 import { type PlayerView, viewFor } from '../game/view';
 import { GameHost } from './host';
 import { type ClientAction, type GuestMessage, type HostMessage, PEER_PREFIX } from './protocol';
@@ -56,7 +56,9 @@ const SOLO_SAVE_KEY = 'kw.soloGame';
 export function savedSoloGame(): GameState | null {
   try {
     const state = JSON.parse(localStorage.getItem(SOLO_SAVE_KEY) ?? 'null') as GameState | null;
-    return state && state.phase !== 'lobby' && state.phase !== 'gameOver' && Array.isArray(state.ready) ? state : null;
+    if (!state || state.phase === 'lobby' || state.phase === 'gameOver' || !Array.isArray(state.ready)) return null;
+    // Games saved before a table rule existed get its default.
+    return { ...state, settings: { ...DEFAULT_SETTINGS, ...state.settings } };
   } catch {
     return null;
   }

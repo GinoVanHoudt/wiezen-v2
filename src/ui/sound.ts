@@ -235,7 +235,8 @@ export function useGameSounds(view: PlayerView | null, online: boolean) {
     } else {
       const log = view.bidding?.log ?? [];
       if (view.phase === 'bidding' && log.length > (p.bidding?.log.length ?? 0)) {
-        sound.bid(log[log.length - 1].bid.kind === 'pass');
+        const kind = log[log.length - 1].bid.kind;
+        sound.bid(kind === 'pass' || kind === 'wait');
       }
       if (view.playedCards.length > p.playedCards.length) sound.cardPlay();
       if (p.trick?.winner != null && view.trick?.winner == null) sound.collect();

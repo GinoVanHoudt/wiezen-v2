@@ -29,9 +29,12 @@ export function BiddingPanel({ view, send }: Props) {
   };
 
   const canJoin = legal.some((l) => l.kind === 'join');
+  const canWait = legal.some((l) => l.kind === 'wait');
   const asks = legal.filter((l) => l.kind === 'ask');
   const directs = [...new Set(legal.flatMap((l) => (l.kind === 'bid' ? [l.contract] : [])))];
   const high = b.high;
+  // The auction is over: the waiter or the asker answers yes/no about an unanswered ask.
+  const deciding = b.waiterDecision || b.askerDecision;
 
   return (
     <motion.div
@@ -84,6 +87,20 @@ export function BiddingPanel({ view, send }: Props) {
         </p>
       )}
 
+      {myTurn && b.waiterDecision && (
+        <div className="bid-actions">
+          <p>{t('waiterQuestion', { name: name(high!.declarers[0]), suit: t(`suit.${high!.suit!}`) })}</p>
+          <div className="btn-row">
+            <button className="btn primary" onClick={() => bid({ kind: 'join' })}>
+              {t('joinAsk')} <SuitIcon suit={high!.suit!} />
+            </button>
+            <button className="btn" onClick={() => bid({ kind: 'pass' })}>
+              {t('pass')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {myTurn && b.askerDecision && (
         <div className="bid-actions">
           <p>{t('aloneQuestion', { suit: t(`suit.${high!.suit!}`) })}</p>
@@ -98,13 +115,18 @@ export function BiddingPanel({ view, send }: Props) {
         </div>
       )}
 
-      {myTurn && !b.askerDecision && !pending && (
+      {myTurn && !deciding && !pending && (
         <div className="bid-actions">
           <div className="your-turn">{t('yourTurn')}</div>
           <div className="btn-row">
             <button className="btn" onClick={() => bid({ kind: 'pass' })}>
               {t('pass')}
             </button>
+            {canWait && (
+              <button className="btn" title={t('waitHint')} onClick={() => bid({ kind: 'wait' })}>
+                {t('wait')}
+              </button>
+            )}
             {canJoin && (
               <button className="btn primary" onClick={() => bid({ kind: 'join' })}>
                 {high?.type === 'ask' ? (

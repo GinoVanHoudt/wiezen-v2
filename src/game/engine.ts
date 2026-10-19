@@ -15,6 +15,8 @@ export type DirectBid = 'piccolo' | 'abondance' | 'miserie' | 'openMiserie' | 's
 
 export type BidAction =
   | { kind: 'pass' }
+  /** The first speaker sits out the auction like a pass, but may still join an unanswered ask at the end. */
+  | { kind: 'wait' }
   | { kind: 'ask'; suit: Suit }
   /** Join the highest bid: "meegaan" with an ask, or declare the same miserie/piccolo too. */
   | { kind: 'join' }
@@ -52,6 +54,10 @@ export interface Bidding {
   passed: boolean[];
   high: HighBid | null;
   log: BidLogEntry[];
+  /** The first speaker who chose to wait. */
+  waiter: Seat | null;
+  /** The auction ended on an ask nobody joined: the waiter may still join it. */
+  waiterDecision: boolean;
   askerDecision: boolean;
   troel: Troel | null;
 }
@@ -168,6 +174,8 @@ function startHand(state: GameState, dealer: Seat, random: () => number): GameSt
     passed: [false, false, false, false],
     high: troel ? { type: 'troel', suit: troel.trump, declarers: [troel.seat, troel.partner] } : null,
     log: troel ? [{ seat: troel.seat, bid: { kind: 'troel', suit: troel.trump } }] : [],
+    waiter: null,
+    waiterDecision: false,
     askerDecision: false,
     troel,
   };
@@ -232,9 +240,12 @@ export type StateLike = Omit<GameState, 'hands'> & { hands: readonly (readonly C
 export function legalBids(state: StateLike, seat: Seat): BidAction[] {
   const b = state.bidding;
   if (state.phase !== 'bidding' || !b || b.turn !== seat) return [];
+  if (b.waiterDecision) return [{ kind: 'join' }, { kind: 'pass' }];
   if (b.askerDecision) return [{ kind: 'alone' }, { kind: 'pass' }];
 
   const bids: BidAction[] = [{ kind: 'pass' }];
+  // Only the very first bid of the hand; a troel is already in the log, and leaves nothing to join.
+  if (state.settings.waiting && b.log.length === 0) bids.push({ kind: 'wait' });
   const high = b.high;
   if (!high) for (const suit of ['H', 'D', 'C', 'S'] as Suit[]) bids.push({ kind: 'ask', suit });
   if (high && !high.declarers.includes(seat)) {
@@ -264,6 +275,15 @@ function applyBid(state: GameState, seat: Seat, bid: BidAction): GameState {
   const old = state.bidding!;
   const b: Bidding = { ...old, passed: old.passed.slice(), log: [...old.log, { seat, bid }] };
 
+  if (old.waiterDecision) {
+    const ask = old.high!;
+    if (bid.kind === 'pass') {
+      return { ...state, bidding: { ...b, waiterDecision: false, askerDecision: true, turn: ask.declarers[0] } };
+    }
+    const declarers = [...ask.declarers, seat];
+    return startPlay(state, b, { type: 'samen', trump: ask.suit, declarers, multiplier: state.nextMultiplier });
+  }
+
   if (old.askerDecision) {
     if (bid.kind === 'pass') return allPassed(state, b);
     return startPlay(state, b, { type: 'alleen', trump: old.high!.suit, declarers: [seat], multiplier: state.nextMultiplier });
@@ -272,6 +292,10 @@ function applyBid(state: GameState, seat: Seat, bid: BidAction): GameState {
   switch (bid.kind) {
     case 'pass':
       b.passed[seat] = true;
+      break;
+    case 'wait':
+      b.passed[seat] = true;
+      b.waiter = seat;
       break;
     case 'ask':
       b.high = { type: 'ask', suit: bid.suit, declarers: [seat] };
@@ -297,7 +321,13 @@ function applyBid(state: GameState, seat: Seat, bid: BidAction): GameState {
   // Auction over.
   const high = b.high;
   if (!high) return allPassed(state, b);
-  if (high.type === 'ask') return { ...state, bidding: { ...b, askerDecision: true, turn: high.declarers[0] } };
+  if (high.type === 'ask') {
+    // Nobody joined: the waiter may still join, otherwise the asker decides whether to play alone.
+    // (`!= null`: games saved before waiting existed have no `waiter` field.)
+    const decision =
+      b.waiter != null ? { waiterDecision: true, turn: b.waiter } : { askerDecision: true, turn: high.declarers[0] };
+    return { ...state, bidding: { ...b, ...decision } };
+  }
   return startPlay(state, b, {
     type: high.type as ContractType,
     trump: high.suit,

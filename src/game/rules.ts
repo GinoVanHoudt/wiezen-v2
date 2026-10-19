@@ -49,9 +49,11 @@ export interface Settings {
   hands: number;
   /** After a hand where everybody passed, the next hand counts double. */
   passDoubles: boolean;
+  /** The first player may wait ("wachten") and still join an unanswered ask once the auction is over. */
+  waiting: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { piccolo: true, hands: 16, passDoubles: true };
+export const DEFAULT_SETTINGS: Settings = { piccolo: true, hands: 16, passDoubles: true, waiting: true };
 
 export interface Contract {
   type: ContractType;

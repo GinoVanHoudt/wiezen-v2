@@ -28,6 +28,8 @@ export function BidText({ entry, t }: { entry: BidLogEntry; t: T }) {
   switch (bid.kind) {
     case 'pass':
       return <>{t('pass')}</>;
+    case 'wait':
+      return <>{t('wait')}</>;
     case 'ask':
       return (
         <>

@@ -116,6 +116,13 @@ export function Lobby({ snapshot, view, send }: Props) {
             />
             <span>{t('optPassDoubles')}</span>
           </label>
+          <label className="check">
+            <input type="checkbox" checked={settings.waiting} onChange={(e) => setSettings({ waiting: e.target.checked })} />
+            <span>
+              {t('optWaiting')}
+              <small className="muted"> — {t('optWaitingHint')}</small>
+            </span>
+          </label>
           <div className="field-row">
             <span>{t('optHands')}</span>
             <div className="segmented">
